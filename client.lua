@@ -2,22 +2,13 @@ local lib = exports.ox_lib
 local interactionCooldowns = {}
 local nearbyNPCs = {}
 
-local function getNearbyNPC()
-    local playerPed = PlayerPedId()
-    local playerCoords = GetEntityCoords(playerPed)
-    
-    for ped in EnumeratePeds() do
-        if ped ~= playerPed and not IsPedAPlayer(ped) and not IsPedDeadOrDying(ped) then
-            local npcCoords = GetEntityCoords(ped)
-            local distance = #(playerCoords - npcCoords)
-            
-            if distance <= Config.Interactions.maxDistance then
-                return ped, distance
-            end
+entityEnumerator = {
+    __gc = function(enum)
+        if enum.destructor and enum.handle then
+            enum.destructor(enum.handle)
         end
     end
-    return nil, nil
-end
+}
 
 local function EnumeratePeds()
     return coroutine.wrap(function()
@@ -41,13 +32,22 @@ local function EnumeratePeds()
     end)
 end
 
-entityEnumerator = {
-    __gc = function(enum)
-        if enum.destructor and enum.handle then
-            enum.destructor(enum.handle)
+local function getNearbyNPC()
+    local playerPed = PlayerPedId()
+    local playerCoords = GetEntityCoords(playerPed)
+    
+    for ped in EnumeratePeds() do
+        if ped ~= playerPed and not IsPedAPlayer(ped) and not IsPedDeadOrDying(ped) then
+            local npcCoords = GetEntityCoords(ped)
+            local distance = #(playerCoords - npcCoords)
+            
+            if distance <= Config.Interactions.maxDistance then
+                return ped, distance
+            end
         end
     end
-}
+    return nil, nil
+end
 
 local function canInteract(npcId)
     local currentTime = GetGameTimer()
